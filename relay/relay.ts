@@ -1,8 +1,10 @@
 import { GelatoRelay, CallWithERC2771Request } from "@gelatonetwork/relay-sdk";
 import { ethers } from "ethers";
 
-
+// Initialize Gelato Relay
 const relay = new GelatoRelay();
+
+// Payroll contract ABI (with the `fundContract` function)
 const PAYROLL_ABI = [
   "function fundContract() public payable",
 ];
@@ -22,23 +24,41 @@ async function sponsorFundContract(
   apiKey: string
 ) {
 
-  const provider = new ethers.BrowserProvider((window as any).ethereum);  // Use BrowserProvider or other suitable provider
-  const signer = await provider.getSigner();
-  const user = await signer.getAddress();
+  // Initialize provider (choose a suitable RPC URL)
+  const provider = new ethers.JsonRpcProvider("https://your-eth-rpc-url.com"); // Replace with actual provider URL
 
+  // Wallet setup with private key (from server environment)
+  if (!process.env.PRIVATE_KEY) {
+    throw new Error("PRIVATE_KEY is not defined in the environment variables");
+  }
+  const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  const user = signer.address; // The user submitting the transaction
+
+  // Create contract instance with signer
   const payrollContract = new ethers.Contract(payrollAddress, PAYROLL_ABI, signer);
-  const { data } = await payrollContract.fundContract.populateTransaction();
 
+  // Convert Ether amount to Wei (required for fundContract)
+  const topUpAmountInWei = ethers.parseEther(topUpAmountInEth.toString());
 
+  // Build transaction data for `fundContract`
+  const txData = payrollContract.interface.encodeFunctionData("fundContract");
+
+  // Create Gelato Relay request with ERC2771 meta-transaction
   const request: CallWithERC2771Request = {
-    chainId: (await provider.getNetwork()).chainId,
+    chainId: (await provider.getNetwork()).chainId, // Fetch the correct chain ID from provider
     target: payrollAddress,
-    data: data,
+    data: txData,
     user: user,
   };
 
   try {
-    const relayResponse = await relay.sponsoredCallERC2771(request, signer, apiKey);
+    // Send the sponsored transaction via Gelato Relay
+    const relayResponse = await relay.sponsoredCallERC2771(
+      request,
+      signer, // Use signer for signing the request
+      apiKey, // Your Gelato API key
+    );
+
     console.log("Relay Response:", relayResponse);
     return relayResponse;
   } catch (error) {
@@ -47,9 +67,14 @@ async function sponsorFundContract(
   }
 }
 
-const payrollAddress = "YOUR_PAYROLL_CONTRACT_ADDRESS";
-const topUpAmountInEth = 0.01; 
-const apiKey = "YOUR_GELATO_RELAY_API_KEY";
+// Example usage:
+const payrollAddress = "0xYOUR_PAYROLL_CONTRACT_ADDRESS";
+const topUpAmountInEth = 0.01; // The amount in ETH to top-up
+const apiKey = process.env.GELATO_RELAY_API_KEY; // Load API key securely from environment
+
+if (!apiKey) {
+  throw new Error("GELATO_RELAY_API_KEY is not defined in the environment variables");
+}
 
 sponsorFundContract(payrollAddress, topUpAmountInEth, apiKey)
   .then((response) => {
