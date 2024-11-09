@@ -1,0 +1,19 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "@gelatonetwork/relay-context": "^4.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "hardhat": "^2.22.15",
+    "typechain": "^8.3.2"
+  },
+  "dependencies": {
+    "@gelatonetwork/relay-sdk": "^5.5.6",
+    "@gelatonetwork/web3-functions-sdk": "^2.4.4",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.7.0"
+  }
+}

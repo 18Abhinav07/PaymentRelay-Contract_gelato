@@ -1,0 +1,5 @@
+{
+  "payroll": "YOUR_PAYROLL_CONTRACT_ADDRESS",
+  "topUpAmountInUsd": 150,
+  "thresholdInUsd": 100
+}
